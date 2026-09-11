@@ -176,6 +176,9 @@ function showAccount(accountId, provider) {
   mainWindow.contentView.addChildView(view);
   activeAccountId = accountId;
   layoutActiveView();
+  // A freshly attached WebContentsView does not grab keyboard focus on its own,
+  // so text fields inside it look unresponsive. Focus it explicitly.
+  view.webContents.focus();
 }
 
 function hideActiveView() {

@@ -49,12 +49,14 @@ function providerLabel(id) {
 // native web view to sit exactly over it.
 function syncViewBounds() {
   const rect = $("#viewport").getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
+  // WebContentsView.setBounds expects device-independent pixels — the same
+  // coordinate space as getBoundingClientRect — so do NOT multiply by the
+  // device pixel ratio (that misplaced the view / broke clicks on HiDPI).
   api.view.setBounds({
-    x: rect.left * dpr,
-    y: rect.top * dpr,
-    width: rect.width * dpr,
-    height: rect.height * dpr,
+    x: rect.left,
+    y: rect.top,
+    width: rect.width,
+    height: rect.height,
   });
 }
 new ResizeObserver(syncViewBounds).observe(document.body);
