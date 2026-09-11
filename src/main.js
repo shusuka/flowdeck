@@ -115,6 +115,10 @@ function ensureView(accountId, provider) {
       partition,
       contextIsolation: true,
       nodeIntegration: false,
+      // Keep timers/sockets running at full speed even when this view isn't the
+      // foreground one. Without this, Chromium throttles background views and a
+      // QR login (Dola) goes stale before you can scan it -> "Rescan QR Code".
+      backgroundThrottling: false,
     },
   });
   view.setBackgroundColor("#0b0f17");
