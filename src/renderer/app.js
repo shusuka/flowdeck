@@ -86,12 +86,17 @@ function renderAccounts() {
   accounts.forEach((acc) => {
     const card = el("div", "card" + (acc.id === activeAccountId ? " active" : ""));
     const row = el("div", "row");
-    const left = el("div");
+
+    const left = el("div", "acc-left");
+    const avatar = el("div", "avatar prov-" + acc.provider);
+    avatar.textContent = (acc.name.trim()[0] || "?").toUpperCase();
+    const meta = el("div");
     const name = el("div", "name");
     name.textContent = acc.name;
     const sub = el("div", "sub");
     sub.textContent = providerLabel(acc.provider);
-    left.append(name, sub);
+    meta.append(name, sub);
+    left.append(avatar, meta);
 
     const actions = el("div", "mini-actions");
     const del = el("button", "mini danger");

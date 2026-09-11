@@ -150,6 +150,29 @@ body {
   justify-content: space-between;
   gap: 8px;
 }
+.acc-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.avatar {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+.avatar.prov-dola {
+  background: linear-gradient(135deg, #ff9a5b, #f2662f);
+}
+.avatar.prov-migoo {
+  background: linear-gradient(135deg, #59d0a0, #2fae7d);
+}
 .card .name {
   font-weight: 600;
 }

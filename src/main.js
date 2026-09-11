@@ -13,6 +13,12 @@ const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
 
+// A real desktop-Chrome user agent. Google refuses sign-in from user agents
+// that contain "Electron"/"flowdeck", so we present a plain Chrome string that
+// matches the Chromium build shipped with Electron 32.
+const CHROME_UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
+
 // ---- Providers -------------------------------------------------------------
 // The sites each account tab can host. Add or edit freely.
 const PROVIDERS = {
@@ -80,6 +86,7 @@ function ensureView(accountId, provider) {
   const providerKey = PROVIDERS[provider] ? provider : "google-flow";
   const partition = partitionFor(accountId);
   const ses = session.fromPartition(partition);
+  ses.setUserAgent(CHROME_UA);
   attachDownloadHandler(ses);
 
   const view = new WebContentsView({
@@ -90,6 +97,12 @@ function ensureView(accountId, provider) {
     },
   });
   view.setBackgroundColor("#0b0f17");
+  view.webContents.setUserAgent(CHROME_UA);
+  // Strip the client hint that reveals we are not really Chrome.
+  ses.webRequest.onBeforeSendHeaders((details, cb) => {
+    delete details.requestHeaders["sec-ch-ua"];
+    cb({ requestHeaders: details.requestHeaders });
+  });
   view.webContents.setWindowOpenHandler(({ url }) => {
     // Keep navigation inside the tab; open unrelated targets externally.
     if (url.startsWith("http")) view.webContents.loadURL(url);
