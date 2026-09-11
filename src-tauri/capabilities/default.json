@@ -1,0 +1,22 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default permissions for FlowDeck",
+  "windows": ["main"],
+  "webviews": ["main"],
+  "permissions": [
+    "core:default",
+    "allow-set-view-bounds",
+    "allow-open-view",
+    "allow-hide-view",
+    "allow-reload-view",
+    "allow-remove-view",
+    "allow-load-accounts",
+    "allow-save-accounts",
+    "allow-list-prompts",
+    "allow-create-prompt",
+    "allow-update-prompt",
+    "allow-delete-prompt",
+    "allow-toggle-prompt-pinned"
+  ]
+}

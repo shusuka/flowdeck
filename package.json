@@ -8,9 +8,13 @@
   "private": true,
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --win nsis"
+    "dist": "electron-builder --win nsis",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.11.4",
     "electron": "^32.2.0",
     "electron-builder": "^25.1.8"
   },
@@ -30,5 +34,8 @@
       "installerIcon": "build/icon.ico",
       "uninstallerIcon": "build/icon.ico"
     }
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.11.1"
   }
 }
