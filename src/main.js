@@ -104,7 +104,21 @@ function ensureView(accountId, provider) {
     cb({ requestHeaders: details.requestHeaders });
   });
   view.webContents.setWindowOpenHandler(({ url }) => {
-    // Keep navigation inside the tab; open unrelated targets externally.
+    // Google/OAuth sign-in often uses a real popup window that must keep its
+    // opener and its own window (postMessage handshake). Let auth popups open
+    // as genuine child windows sharing this account's session; everything else
+    // stays inside the tab.
+    if (/^https?:\/\/(accounts\.google\.|[^/]*\.?google\.com|[^/]*\.?googleusercontent\.com|appleid\.apple\.com|login\.microsoftonline\.com|github\.com|www\.facebook\.com)/.test(url)) {
+      return {
+        action: "allow",
+        overrideBrowserWindowOptions: {
+          width: 520,
+          height: 680,
+          autoHideMenuBar: true,
+          webPreferences: { partition, contextIsolation: true },
+        },
+      };
+    }
     if (url.startsWith("http")) view.webContents.loadURL(url);
     return { action: "deny" };
   });
