@@ -17,7 +17,9 @@
       list: async () => PROVIDERS,
     },
     accounts: {
-      load: () => invoke("load_accounts"),
+      // The Rust command returns null when no accounts file exists yet; the UI
+      // expects an array, so coerce it.
+      load: async () => (await invoke("load_accounts")) ?? [],
       save: (accounts) => invoke("save_accounts", { accounts }),
     },
     view: {
@@ -28,10 +30,10 @@
           width: b.width,
           height: b.height,
         }),
-      open: (accountId, provider) =>
-        invoke("open_view", { account_id: accountId, provider }),
+      // Tauri auto-maps camelCase args to the Rust snake_case params.
+      open: (accountId, provider) => invoke("open_view", { accountId, provider }),
       hide: () => invoke("hide_view"),
-      remove: (accountId) => invoke("remove_view", { account_id: accountId }),
+      remove: (accountId) => invoke("remove_view", { accountId }),
       reload: () => invoke("reload_view"),
     },
     prompts: {

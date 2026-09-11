@@ -311,6 +311,12 @@ $("#promptSave").addEventListener("click", async () => {
 $("#reloadBtn").addEventListener("click", () => api.view.reload());
 $("#closeViewBtn").addEventListener("click", closeActiveView);
 
+// Surface any unexpected invoke/runtime failure instead of failing silently.
+window.addEventListener("unhandledrejection", (event) => {
+  const reason = event.reason;
+  toast(typeof reason === "string" ? reason : reason?.message || "Terjadi kesalahan");
+});
+
 // ---- Init ------------------------------------------------------------------
 async function init() {
   providers = await api.providers.list();

@@ -3,7 +3,6 @@
   "identifier": "default",
   "description": "Default permissions for FlowDeck",
   "windows": ["main"],
-  "webviews": ["main"],
   "permissions": [
     "core:default",
     "allow-set-view-bounds",
