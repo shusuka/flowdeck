@@ -15,8 +15,14 @@ contextBridge.exposeInMainWorld("flowdeck", {
     open: (accountId, provider) =>
       ipcRenderer.invoke("view:open", { accountId, provider }),
     hide: () => ipcRenderer.invoke("view:hide"),
+    setCovered: (value) => ipcRenderer.invoke("view:setCovered", !!value),
+    unload: (accountId, provider) =>
+      ipcRenderer.invoke("view:unload", { accountId, provider }),
     remove: (accountId) => ipcRenderer.invoke("view:remove", accountId),
     reload: () => ipcRenderer.invoke("view:reload"),
+    back: () => ipcRenderer.invoke("view:back"),
+    forward: () => ipcRenderer.invoke("view:forward"),
+    setZoom: (factor) => ipcRenderer.invoke("view:setZoom", factor),
   },
   prompts: {
     list: () => ipcRenderer.invoke("prompts:list"),

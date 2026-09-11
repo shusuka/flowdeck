@@ -33,8 +33,13 @@
       // Tauri auto-maps camelCase args to the Rust snake_case params.
       open: (accountId, provider) => invoke("open_view", { accountId, provider }),
       hide: () => invoke("hide_view"),
+      setCovered: (covered) => invoke("set_view_covered", { covered: !!covered }),
+      unload: (accountId, provider) => invoke("unload_view", { accountId, provider }),
       remove: (accountId) => invoke("remove_view", { accountId }),
       reload: () => invoke("reload_view"),
+      back: () => invoke("back_view"),
+      forward: () => invoke("forward_view"),
+      setZoom: (factor) => invoke("set_view_zoom", { factor }),
     },
     prompts: {
       list: () => invoke("list_prompts"),

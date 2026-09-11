@@ -7,8 +7,15 @@ tidak ada lisensi, tidak ada auto-update dari pihak luar.
 
 ## Fitur
 
-- **Multi-akun**: tiap akun punya sesi login sendiri (partition Electron terpisah),
-  jadi bisa login banyak akun sekaligus tanpa saling bentrok.
+- **Multi-akun**: tiap akun punya sesi login sendiri (partition Electron / profil
+  WebView2 terpisah), jadi bisa login banyak akun sekaligus tanpa saling bentrok.
+- **Sekali login, semua aplikasi**: satu akun dipakai bersama oleh Google Flow,
+  Dola, dan Migoo (sesinya sama). Login Google sekali, lalu di aplikasi lain cukup
+  pilih "masuk dengan Google" → akun Google yang sama, tanpa password lagi.
+- **Dikelompokkan per aplikasi**: sidebar menampilkan grup Google Flow / Dola /
+  Migoo; tombol `+` di tiap grup untuk memakai akun yang sudah ada atau akun baru.
+- **Toolbar**: ganti aplikasi untuk akun yang sedang terbuka, kembali/maju, muat
+  ulang, zoom tampilan situs, dan sembunyikan sidebar agar situs lebih lebar.
 - **Beberapa layanan**: Google Flow, Dola, Migoo. Bisa ditambah di `PROVIDERS`
   (lihat `src/main.js`).
 - **Pustaka prompt**: simpan, cari, sematkan, salin, ubah, hapus. Tersimpan lokal.
@@ -43,6 +50,10 @@ const PROVIDERS = {
   // tambah di sini
 };
 ```
+
+Untuk versi Tauri, tambahkan juga di `PROVIDERS` pada `src/renderer/tauri-bridge.js`
+dan `provider_url` di `src-tauri/src/webviews.rs`. Ikon/nama pendek di toolbar diatur
+di `APP_META` (`src/renderer/app.js`).
 
 ## Catatan
 

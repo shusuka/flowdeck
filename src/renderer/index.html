@@ -22,12 +22,13 @@
           <button class="tab" data-tab="prompts">Prompt</button>
         </nav>
 
-        <!-- Accounts panel -->
+        <!-- Accounts panel: grouped per app -->
         <section class="panel" data-panel="accounts">
           <div class="panel-head">
-            <h2>Akun</h2>
-            <button id="addAccountBtn" class="ghost-btn">+ Tambah</button>
+            <h2>Akun per aplikasi</h2>
+            <button id="addAccountBtn" class="ghost-btn">+ Akun</button>
           </div>
+          <input id="accountSearch" class="search" placeholder="Cari akun / email…" />
           <div id="accountList" class="list"></div>
         </section>
 
@@ -44,36 +45,90 @@
 
       <main class="main">
         <header class="toolbar">
-          <div id="activeTitle" class="active-title">Belum ada akun terbuka</div>
+          <button id="sidebarBtn" class="icon-btn" title="Sembunyikan panel">☰</button>
+          <div id="activeChip" class="active-chip"></div>
+          <div id="appSwitch" class="seg" aria-label="Ganti aplikasi"></div>
+          <div class="spacer"></div>
           <div class="toolbar-actions">
-            <button id="reloadBtn" class="ghost-btn" disabled>⟳ Muat ulang</button>
-            <button id="closeViewBtn" class="ghost-btn" disabled>✕ Tutup</button>
+            <button id="backBtn" class="icon-btn" title="Kembali" disabled>←</button>
+            <button id="forwardBtn" class="icon-btn" title="Maju" disabled>→</button>
+            <button id="reloadBtn" class="icon-btn" title="Muat ulang" disabled>⟳</button>
+            <div class="zoom" title="Perbesar / perkecil tampilan situs">
+              <button id="zoomOutBtn" class="icon-btn" title="Perkecil" disabled>−</button>
+              <button id="zoomResetBtn" class="zoom-val" title="Kembali ke 100%" disabled>100%</button>
+              <button id="zoomInBtn" class="icon-btn" title="Perbesar" disabled>+</button>
+            </div>
+            <button
+              id="closeViewBtn"
+              class="icon-btn"
+              title="Tutup tampilan (tetap berjalan di latar)"
+              disabled
+            >
+              ✕
+            </button>
           </div>
         </header>
         <!-- The native web view is positioned over this region by the main process. -->
         <div id="viewport" class="viewport">
           <div id="emptyState" class="empty">
             <div class="empty-icon">🎬</div>
-            <p>Pilih atau tambah akun untuk mulai ✨</p>
-            <p class="muted">Tiap akun punya sesi login terpisah.</p>
+            <h1>Sekali login, pakai di semua aplikasi</h1>
+            <ol class="steps">
+              <li><b>Tambah akun</b>, mis. “Email A”. Satu akun = satu sesi login.</li>
+              <li><b>Buka Google Flow</b> dengan akun itu, lalu login Google seperti biasa.</li>
+              <li>
+                <b>Pindah ke Dola / Migoo</b> lewat tombol aplikasi di atas. Pilih masuk
+                dengan Google, maka akun Google A sudah ada: tinggal klik, tanpa password.
+              </li>
+            </ol>
+            <button id="emptyAddBtn" class="primary-btn">+ Tambah akun</button>
           </div>
         </div>
       </main>
     </div>
 
-    <!-- Account modal -->
+    <!-- Account modal (new / edit) -->
     <div id="accountModal" class="modal hidden">
       <div class="modal-card">
-        <h3>Tambah Akun</h3>
-        <label>Nama
-          <input id="accName" placeholder="mis. Akun utama" />
+        <h3 id="accModalTitle">Tambah Akun</h3>
+        <label
+          ><span>Nama akun</span>
+          <input id="accName" placeholder="mis. Email A" maxlength="100" />
         </label>
-        <label>Layanan
-          <select id="accProvider"></select>
+        <label
+          ><span>Email / catatan <em>(opsional)</em></span>
+          <input id="accEmail" placeholder="mis. emaila@gmail.com" maxlength="200" />
         </label>
+        <div class="field">
+          <span class="field-label">Tampilkan di aplikasi</span>
+          <div id="accApps" class="app-checks"></div>
+        </div>
+        <p class="hint">
+          🔑 Semua aplikasi di akun ini memakai <b>satu sesi login</b>. Login Google sekali
+          di salah satu aplikasi, lalu di aplikasi lain cukup pilih akun Google yang sama.
+        </p>
         <div class="modal-actions">
+          <button id="accDelete" class="danger-btn" hidden>Hapus akun</button>
+          <span class="spacer"></span>
           <button id="accCancel" class="ghost-btn">Batal</button>
           <button id="accSave" class="primary-btn">Simpan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add an existing account to an app -->
+    <div id="pickModal" class="modal hidden">
+      <div class="modal-card">
+        <h3 id="pickTitle">Tambah akun</h3>
+        <p class="hint">
+          Pilih akun yang sudah ada: sesi login-nya ikut terbawa, jadi tidak perlu login
+          ulang.
+        </p>
+        <div id="pickList" class="pick-list"></div>
+        <div class="modal-actions">
+          <button id="pickNew" class="ghost-btn">+ Akun baru</button>
+          <span class="spacer"></span>
+          <button id="pickCancel" class="ghost-btn">Batal</button>
         </div>
       </div>
     </div>
@@ -83,16 +138,20 @@
       <div class="modal-card">
         <h3 id="promptModalTitle">Prompt Baru</h3>
         <input type="hidden" id="promptId" />
-        <label>Judul
+        <label
+          ><span>Judul</span>
           <input id="promptTitle" placeholder="Judul singkat" />
         </label>
-        <label>Kategori
+        <label
+          ><span>Kategori</span>
           <input id="promptCategory" placeholder="opsional" />
         </label>
-        <label>Isi prompt
+        <label
+          ><span>Isi prompt</span>
           <textarea id="promptBody" rows="7" placeholder="Tulis prompt…"></textarea>
         </label>
         <div class="modal-actions">
+          <span class="spacer"></span>
           <button id="promptCancel" class="ghost-btn">Batal</button>
           <button id="promptSave" class="primary-btn">Simpan</button>
         </div>

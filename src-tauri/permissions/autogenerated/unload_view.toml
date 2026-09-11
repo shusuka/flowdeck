@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-unload-view"
+description = "Enables the unload_view command without any pre-configured scope."
+commands.allow = ["unload_view"]
+
+[[permission]]
+identifier = "deny-unload-view"
+description = "Denies the unload_view command without any pre-configured scope."
+commands.deny = ["unload_view"]

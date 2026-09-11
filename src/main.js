@@ -47,15 +47,37 @@ function writeJson(file, value) {
 }
 
 // ---- Window + per-account views --------------------------------------------
+// One account = one login session (partition), shared by every provider view
+// of that account. Sign in to Google once in Flow and Dola/Migoo see the same
+// Google cookies, so their "Continue with Google" is just an account pick.
 let mainWindow = null;
-/** @type {Map<string, WebContentsView>} accountId -> view */
+/** @type {Map<string, {view: WebContentsView, accountId: string, provider: string}>} */
 const views = new Map();
-let activeAccountId = null;
+let activeKey = null;
+// True while the renderer shows a modal: the native view is detached so the
+// modal (HTML, underneath) is visible and clickable.
+let covered = false;
 // Bounds of the content region the renderer reserves for the web view.
 let contentBounds = { x: 0, y: 0, width: 0, height: 0 };
 
 function partitionFor(accountId) {
   return `persist:flowdeck-${accountId}`;
+}
+
+function viewKey(accountId, provider) {
+  return `${accountId}::${provider}`;
+}
+
+function checkAccountId(accountId) {
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(String(accountId))) throw new Error("bad id");
+}
+
+function checkProvider(provider) {
+  if (!Object.hasOwn(PROVIDERS, provider)) throw new Error("unknown provider");
+}
+
+function activeView() {
+  return activeKey ? views.get(activeKey)?.view : null;
 }
 
 // Sites like Dola use the camera (QR / document scan), clipboard and
@@ -100,15 +122,26 @@ function attachDownloadHandler(ses) {
   });
 }
 
-function ensureView(accountId, provider) {
-  if (views.has(accountId)) return views.get(accountId);
+// Strip the client hint that reveals we are not really Chrome.
+function attachHeaderFilter(ses) {
+  if (ses.__flowdeckHeaders) return;
+  ses.__flowdeckHeaders = true;
+  ses.webRequest.onBeforeSendHeaders((details, cb) => {
+    delete details.requestHeaders["sec-ch-ua"];
+    cb({ requestHeaders: details.requestHeaders });
+  });
+}
 
-  const providerKey = PROVIDERS[provider] ? provider : "google-flow";
+function ensureView(accountId, provider) {
+  const key = viewKey(accountId, provider);
+  if (views.has(key)) return views.get(key).view;
+
   const partition = partitionFor(accountId);
   const ses = session.fromPartition(partition);
   ses.setUserAgent(CHROME_UA);
   attachPermissionHandler(ses);
   attachDownloadHandler(ses);
+  attachHeaderFilter(ses);
 
   const view = new WebContentsView({
     webPreferences: {
@@ -121,13 +154,8 @@ function ensureView(accountId, provider) {
       backgroundThrottling: false,
     },
   });
-  view.setBackgroundColor("#0b0f17");
+  view.setBackgroundColor("#f4f1ff");
   view.webContents.setUserAgent(CHROME_UA);
-  // Strip the client hint that reveals we are not really Chrome.
-  ses.webRequest.onBeforeSendHeaders((details, cb) => {
-    delete details.requestHeaders["sec-ch-ua"];
-    cb({ requestHeaders: details.requestHeaders });
-  });
   view.webContents.setWindowOpenHandler(({ url }) => {
     // Google/OAuth sign-in often uses a real popup window that must keep its
     // opener and its own window (postMessage handshake). Let auth popups open
@@ -147,15 +175,14 @@ function ensureView(accountId, provider) {
     if (url.startsWith("http")) view.webContents.loadURL(url);
     return { action: "deny" };
   });
-  view.webContents.loadURL(PROVIDERS[providerKey].url);
+  view.webContents.loadURL(PROVIDERS[provider].url);
 
-  views.set(accountId, view);
+  views.set(key, { view, accountId, provider });
   return view;
 }
 
 function layoutActiveView() {
-  if (!activeAccountId) return;
-  const view = views.get(activeAccountId);
+  const view = activeView();
   if (!view) return;
   const b = contentBounds;
   view.setBounds({
@@ -166,35 +193,54 @@ function layoutActiveView() {
   });
 }
 
-function showAccount(accountId, provider) {
-  const view = ensureView(accountId, provider);
-
-  // Detach any other visible view.
-  for (const [id, v] of views) {
-    if (id !== accountId) mainWindow.contentView.removeChildView(v);
-  }
+function attachActiveView() {
+  const view = activeView();
+  if (!view || covered) return;
   mainWindow.contentView.addChildView(view);
-  activeAccountId = accountId;
   layoutActiveView();
   // A freshly attached WebContentsView does not grab keyboard focus on its own,
   // so text fields inside it look unresponsive. Focus it explicitly.
   view.webContents.focus();
 }
 
+function showView(accountId, provider) {
+  const key = viewKey(accountId, provider);
+  ensureView(accountId, provider);
+
+  // Detach any other visible view.
+  for (const [k, entry] of views) {
+    if (k !== key) mainWindow.contentView.removeChildView(entry.view);
+  }
+  activeKey = key;
+  attachActiveView();
+}
+
 function hideActiveView() {
-  if (!activeAccountId) return;
-  const view = views.get(activeAccountId);
+  const view = activeView();
   if (view) mainWindow.contentView.removeChildView(view);
-  activeAccountId = null;
+  activeKey = null;
+}
+
+function setCovered(value) {
+  covered = !!value;
+  const view = activeView();
+  if (!view) return;
+  if (covered) mainWindow.contentView.removeChildView(view);
+  else attachActiveView();
+}
+
+function destroyView(key) {
+  const entry = views.get(key);
+  if (!entry) return;
+  if (activeKey === key) hideActiveView();
+  mainWindow.contentView.removeChildView(entry.view);
+  entry.view.webContents.close();
+  views.delete(key);
 }
 
 function destroyAccount(accountId) {
-  const view = views.get(accountId);
-  if (view) {
-    if (activeAccountId === accountId) hideActiveView();
-    mainWindow.contentView.removeChildView(view);
-    view.webContents.close();
-    views.delete(accountId);
+  for (const [key, entry] of [...views]) {
+    if (entry.accountId === accountId) destroyView(key);
   }
 }
 
@@ -204,7 +250,7 @@ function createWindow() {
     height: 760,
     minWidth: 940,
     minHeight: 600,
-    backgroundColor: "#0b0f17",
+    backgroundColor: "#f4f1ff",
     title: "FlowDeck",
     icon: path.join(__dirname, "renderer", "icon.png"),
     webPreferences: {
@@ -239,18 +285,38 @@ ipcMain.handle("view:setBounds", (_e, bounds) => {
   layoutActiveView();
 });
 ipcMain.handle("view:open", (_e, { accountId, provider }) => {
-  if (!/^[A-Za-z0-9_-]{1,128}$/.test(accountId)) throw new Error("bad id");
-  showAccount(accountId, provider);
+  checkAccountId(accountId);
+  checkProvider(provider);
+  showView(accountId, provider);
 });
 ipcMain.handle("view:hide", () => hideActiveView());
+ipcMain.handle("view:setCovered", (_e, value) => setCovered(value));
+// Close one provider view of an account; its login session is kept.
+ipcMain.handle("view:unload", (_e, { accountId, provider }) => {
+  checkAccountId(accountId);
+  checkProvider(provider);
+  destroyView(viewKey(accountId, provider));
+});
 ipcMain.handle("view:remove", (_e, accountId) => {
+  checkAccountId(accountId);
   destroyAccount(accountId);
   // Clear the isolated login session for this account.
   const ses = session.fromPartition(partitionFor(accountId));
   return ses.clearStorageData();
 });
-ipcMain.handle("view:reload", () => {
-  if (activeAccountId) views.get(activeAccountId)?.webContents.reload();
+ipcMain.handle("view:reload", () => activeView()?.webContents.reload());
+ipcMain.handle("view:back", () => {
+  const history = activeView()?.webContents.navigationHistory;
+  if (history?.canGoBack()) history.goBack();
+});
+ipcMain.handle("view:forward", () => {
+  const history = activeView()?.webContents.navigationHistory;
+  if (history?.canGoForward()) history.goForward();
+});
+ipcMain.handle("view:setZoom", (_e, factor) => {
+  const f = Number(factor);
+  if (!(f >= 0.25 && f <= 3)) throw new Error("bad zoom");
+  activeView()?.webContents.setZoomFactor(f);
 });
 
 // ---- IPC: prompt library ---------------------------------------------------
