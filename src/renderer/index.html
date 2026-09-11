@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FlowDeck</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="logo">◆</div>
+          <div class="brand-text">
+            <strong>FlowDeck</strong>
+            <span>multi-account studio</span>
+          </div>
+        </div>
+
+        <nav class="tabs">
+          <button class="tab active" data-tab="accounts">Akun</button>
+          <button class="tab" data-tab="prompts">Prompt</button>
+        </nav>
+
+        <!-- Accounts panel -->
+        <section class="panel" data-panel="accounts">
+          <div class="panel-head">
+            <h2>Akun</h2>
+            <button id="addAccountBtn" class="ghost-btn">+ Tambah</button>
+          </div>
+          <div id="accountList" class="list"></div>
+        </section>
+
+        <!-- Prompts panel -->
+        <section class="panel hidden" data-panel="prompts">
+          <div class="panel-head">
+            <h2>Pustaka Prompt</h2>
+            <button id="addPromptBtn" class="ghost-btn">+ Baru</button>
+          </div>
+          <input id="promptSearch" class="search" placeholder="Cari prompt…" />
+          <div id="promptList" class="list"></div>
+        </section>
+      </aside>
+
+      <main class="main">
+        <header class="toolbar">
+          <div id="activeTitle" class="active-title">Belum ada akun terbuka</div>
+          <div class="toolbar-actions">
+            <button id="reloadBtn" class="ghost-btn" disabled>⟳ Muat ulang</button>
+            <button id="closeViewBtn" class="ghost-btn" disabled>✕ Tutup</button>
+          </div>
+        </header>
+        <!-- The native web view is positioned over this region by the main process. -->
+        <div id="viewport" class="viewport">
+          <div id="emptyState" class="empty">
+            <div class="empty-icon">◆</div>
+            <p>Pilih atau tambah akun untuk mulai.</p>
+            <p class="muted">Tiap akun punya sesi login terpisah.</p>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Account modal -->
+    <div id="accountModal" class="modal hidden">
+      <div class="modal-card">
+        <h3>Tambah Akun</h3>
+        <label>Nama
+          <input id="accName" placeholder="mis. Akun utama" />
+        </label>
+        <label>Layanan
+          <select id="accProvider"></select>
+        </label>
+        <div class="modal-actions">
+          <button id="accCancel" class="ghost-btn">Batal</button>
+          <button id="accSave" class="primary-btn">Simpan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Prompt modal -->
+    <div id="promptModal" class="modal hidden">
+      <div class="modal-card">
+        <h3 id="promptModalTitle">Prompt Baru</h3>
+        <input type="hidden" id="promptId" />
+        <label>Judul
+          <input id="promptTitle" placeholder="Judul singkat" />
+        </label>
+        <label>Kategori
+          <input id="promptCategory" placeholder="opsional" />
+        </label>
+        <label>Isi prompt
+          <textarea id="promptBody" rows="7" placeholder="Tulis prompt…"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button id="promptCancel" class="ghost-btn">Batal</button>
+          <button id="promptSave" class="primary-btn">Simpan</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
