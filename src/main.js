@@ -164,6 +164,7 @@ function createWindow() {
     minHeight: 600,
     backgroundColor: "#0b0f17",
     title: "FlowDeck",
+    icon: path.join(__dirname, "renderer", "icon.png"),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
