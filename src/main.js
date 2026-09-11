@@ -58,6 +58,26 @@ function partitionFor(accountId) {
   return `persist:flowdeck-${accountId}`;
 }
 
+// Sites like Dola use the camera (QR / document scan), clipboard and
+// notifications. Electron denies these by default, which surfaces as an error
+// in the page. Grant the safe set to each account session.
+function attachPermissionHandler(ses) {
+  if (ses.__flowdeckPerms) return;
+  ses.__flowdeckPerms = true;
+  const ALLOWED = new Set([
+    "media", // camera + microphone (scan)
+    "clipboard-read",
+    "clipboard-sanitized-write",
+    "notifications",
+    "fullscreen",
+    "pointerLock",
+  ]);
+  ses.setPermissionRequestHandler((_wc, permission, callback) => {
+    callback(ALLOWED.has(permission));
+  });
+  ses.setPermissionCheckHandler((_wc, permission) => ALLOWED.has(permission));
+}
+
 function attachDownloadHandler(ses) {
   if (ses.__flowdeckDownloads) return;
   ses.__flowdeckDownloads = true;
@@ -87,6 +107,7 @@ function ensureView(accountId, provider) {
   const partition = partitionFor(accountId);
   const ses = session.fromPartition(partition);
   ses.setUserAgent(CHROME_UA);
+  attachPermissionHandler(ses);
   attachDownloadHandler(ses);
 
   const view = new WebContentsView({
