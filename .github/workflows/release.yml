@@ -1,0 +1,46 @@
+# Builds the Tauri (WebView2) installer on GitHub's Windows runner and attaches
+# it to a GitHub Release. Trigger: push a tag like v1.2.0 (keep it equal to the
+# version in src-tauri/tauri.conf.json), or run it by hand from the Actions tab.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    env:
+      # The Electron binary is not needed for the Tauri build.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+
+      - run: npm ci
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__
+          releaseName: FlowDeck v__VERSION__
+          releaseBody: |
+            Unduh `FlowDeck_*_x64-setup.exe` di bawah lalu jalankan untuk memasang / memperbarui.
+            Akun & sesi login yang sudah ada tetap tersimpan.
+          releaseDraft: false
+          prerelease: false
